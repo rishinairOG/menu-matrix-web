@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     ScatterChart,
     Scatter,
@@ -7,43 +7,53 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    ReferenceLine,
     Cell,
-    Label
+    ZAxis
 } from 'recharts';
+import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 
 const MenuScatterPlot = ({ data }) => {
-    // Calculate averages for the quadrant lines
-    const avgMargin = data.reduce((sum, item) => sum + item.contribution_margin, 0) / data.length;
-    const avgPopularity = data.reduce((sum, item) => sum + item.popularity_index, 0) / data.length;
+    const [zoom, setZoom] = useState(1);
 
     const COLORS = {
-        'Star': '#4ade80',      // Green-400
-        'Plowhorse': '#facc15', // Yellow-400
-        'Puzzle': '#60a5fa',    // Blue-400
-        'Dog': '#f87171'        // Red-400
+        'Star': '#10b981',      // Emerald-500
+        'Plowhorse': '#f59e0b', // Amber-500
+        'Puzzle': '#3b82f6',    // Blue-500
+        'Dog': '#f43f5e'        // Rose-500
+    };
+
+    const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.5, 4));
+    const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.5, 0.5));
+    const handleReset = () => setZoom(1);
+
+    // Dynamic axis domains based on data and zoom
+    const getDomain = (dataKey) => {
+        if (!data || data.length === 0) return [0, 100];
+        const values = data.map(d => d[dataKey]);
+        const max = Math.max(...values);
+        return [0, (max * 1.1) / zoom];
     };
 
     const CustomTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {
-            const data = payload[0].payload;
+            const itemData = payload[0].payload;
             return (
-                <div className="bg-gray-900/90 backdrop-blur-md p-4 border border-white/10 shadow-xl rounded-xl">
-                    <p className="font-bold text-white mb-2">{data.menu_item}</p>
-                    <div className="text-xs text-gray-300 space-y-1">
-                        <div className="flex items-center justify-between gap-4">
-                            <span>Category:</span>
-                            <span className="font-semibold px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider bg-white/5 border border-white/10" style={{ color: COLORS[data.category] }}>
-                                {data.category}
+                <div className="glass-card p-4 border border-white/10 shadow-2xl rounded-2xl animate-reveal">
+                    <p className="font-black text-white mb-2 text-base tracking-tight">{itemData.menu_item}</p>
+                    <div className="text-xs text-gray-400 space-y-1.5 font-bold uppercase tracking-widest">
+                        <div className="flex items-center justify-between gap-6">
+                            <span>Classification:</span>
+                            <span style={{ color: COLORS[itemData.category] }}>
+                                {itemData.category}
                             </span>
                         </div>
-                        <div className="flex items-center justify-between gap-4">
-                            <span>Profit:</span>
-                            <span className="font-mono text-white">${data.contribution_margin?.toFixed(2)}</span>
+                        <div className="flex items-center justify-between gap-6">
+                            <span>Contribution:</span>
+                            <span className="text-white">${itemData.contribution_margin?.toFixed(2)}</span>
                         </div>
-                        <div className="flex items-center justify-between gap-4">
-                            <span>Popularity:</span>
-                            <span className="font-mono text-white">{data.popularity_index?.toFixed(1)}%</span>
+                        <div className="flex items-center justify-between gap-6">
+                            <span>Qty Sold:</span>
+                            <span className="text-white">{itemData.sales_volume}</span>
                         </div>
                     </div>
                 </div>
@@ -53,55 +63,103 @@ const MenuScatterPlot = ({ data }) => {
     };
 
     return (
-        <div className="bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/10 shadow-lg">
-            <h3 className="text-lg font-bold text-white mb-6">Engineering Matrix</h3>
-            <div className="h-96 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                    <ScatterChart
-                        margin={{ top: 20, right: 30, bottom: 20, left: 10 }}
+        <div className="glass-card rounded-[2.5rem] p-10 border border-white/5 animate-reveal relative group" style={{ animationDelay: '0.1s' }}>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10 gap-6">
+                <div>
+                    <h2 className="text-2xl font-black text-white tracking-tight">Performance Matrix</h2>
+                    <p className="text-sm text-gray-500 mt-1 font-medium">Visualization of Profit vs. Popularity</p>
+                </div>
+
+                {/* Zoom Controls */}
+                <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/5 shadow-inner">
+                    <button
+                        onClick={handleZoomIn}
+                        title="Zoom In"
+                        className="p-2 rounded-xl hover:bg-white/10 text-gray-400 hover:text-white transition-all active:scale-90"
                     >
-                        <CartesianGrid strokeDasharray="3 3" opacity={0.1} stroke="#ffffff" />
+                        <ZoomIn size={18} />
+                    </button>
+                    <button
+                        onClick={handleZoomOut}
+                        title="Zoom Out"
+                        className="p-2 rounded-xl hover:bg-white/10 text-gray-400 hover:text-white transition-all active:scale-90"
+                    >
+                        <ZoomOut size={18} />
+                    </button>
+                    <div className="w-px h-4 bg-white/10 mx-1" />
+                    <button
+                        onClick={handleReset}
+                        title="Reset View"
+                        className="p-2 rounded-xl hover:bg-white/10 text-gray-400 hover:text-white transition-all active:scale-90"
+                    >
+                        <Maximize2 size={18} />
+                    </button>
+                    <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">
+                        {zoom === 1 ? 'Default' : `${zoom.toFixed(1)}x`}
+                    </span>
+                </div>
+            </div>
+
+            <div className="h-[500px] w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                    <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} />
                         <XAxis
                             type="number"
-                            dataKey="popularity_index"
-                            name="Popularity"
-                            stroke="#9ca3af"
-                            tick={{ fill: '#9ca3af', fontSize: 12 }}
-                            tickLine={{ stroke: '#4b5563' }}
-                            label={{ value: 'Popularity %', position: 'bottom', offset: 0, fill: '#9ca3af', fontSize: 12 }}
+                            dataKey="sales_volume"
+                            name="Sold"
+                            stroke="#525252"
+                            fontSize={12}
+                            fontWeight={700}
+                            domain={getDomain('sales_volume')}
+                            tickLine={false}
+                            axisLine={false}
+                            label={{ value: 'Quantity Sold', position: 'insideBottom', offset: -10, fill: '#737373', fontSize: 10, fontWeight: 800, textAnchor: 'middle' }}
                         />
                         <YAxis
                             type="number"
                             dataKey="contribution_margin"
-                            name="Margin"
-                            stroke="#9ca3af"
-                            tick={{ fill: '#9ca3af', fontSize: 12 }}
-                            tickLine={{ stroke: '#4b5563' }}
-                            label={{ value: 'Profit Margin $', angle: -90, position: 'insideLeft', fill: '#9ca3af', fontSize: 12 }}
+                            name="Profit"
+                            stroke="#525252"
+                            fontSize={12}
+                            fontWeight={700}
+                            domain={getDomain('contribution_margin')}
+                            tickLine={false}
+                            axisLine={false}
+                            label={{ value: 'Margin ($)', angle: -90, position: 'insideLeft', fill: '#737373', fontSize: 10, fontWeight: 800, textAnchor: 'middle' }}
                         />
-                        <Tooltip content={<CustomTooltip />} />
-
-                        {/* Quadrant Lines */}
-                        <ReferenceLine x={avgPopularity} stroke="#4b5563" strokeDasharray="3 3">
-                            <Label value="Avg Pop" position="insideTopRight" fill="#6b7280" fontSize={10} />
-                        </ReferenceLine>
-                        <ReferenceLine y={avgMargin} stroke="#4b5563" strokeDasharray="3 3">
-                            <Label value="Avg Margin" position="insideRight" fill="#6b7280" fontSize={10} />
-                        </ReferenceLine>
-
-                        <Scatter name="Menu Items" data={data} fill="#8884d8">
+                        <ZAxis type="number" range={[100, 100]} />
+                        <Tooltip
+                            content={<CustomTooltip />}
+                            cursor={{ strokeDasharray: '3 3', stroke: '#4f46e5', strokeWidth: 1 }}
+                        />
+                        <Scatter name="Menu Items" data={data}>
                             {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[entry.category] || '#9ca3af'} strokeWidth={1} stroke="rgba(255,255,255,0.2)" />
+                                <Cell
+                                    key={`cell-${index}`}
+                                    fill={COLORS[entry.category]}
+                                    fillOpacity={0.9}
+                                    className="cursor-pointer transition-all duration-300 hover:scale-125 select-none"
+                                    // Remove thick white stroke, use a very subtle shadow/outer color if needed
+                                    stroke="rgba(255,255,255,0.1)"
+                                    strokeWidth={1}
+                                />
                             ))}
                         </Scatter>
                     </ScatterChart>
                 </ResponsiveContainer>
             </div>
-            <div className="flex justify-center flex-wrap gap-4 mt-6 text-sm">
-                {Object.entries(COLORS).map(([name, color]) => (
-                    <div key={name} className="flex items-center bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-                        <span className="w-2.5 h-2.5 rounded-full mr-2 shadow-sm shadow-black/50" style={{ backgroundColor: color }}></span>
-                        <span className="text-gray-300 text-xs font-medium">{name}</span>
+
+            {/* Legend Indicators */}
+            <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4 pt-10 border-t border-white/5">
+                {Object.entries(COLORS).map(([category, color]) => (
+                    <div key={category} className="flex flex-col items-center gap-2 group/legend cursor-default">
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover/legend:text-gray-300 transition-colors">
+                                {category}s
+                            </span>
+                        </div>
                     </div>
                 ))}
             </div>

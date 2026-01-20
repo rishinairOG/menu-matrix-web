@@ -193,23 +193,26 @@ Vegan Wrap,3.50,10.00,25`;
     const handleAnalyze = () => handleAnalyzeWithFile();
 
     return (
-        <div className="max-w-xl mx-auto mt-20">
-            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl relative overflow-hidden group">
-                {/* Glow Effect */}
+        <div className="max-w-2xl mx-auto">
+            <div className="glass-card rounded-[2.5rem] p-10 relative overflow-hidden group">
+                {/* Shine Effect */}
                 <div className="absolute top-0 -left-1/2 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 group-hover:animate-shine pointer-events-none" />
 
-                <div className="flex items-center space-x-3 mb-2">
-                    <Activity className="h-6 w-6 text-indigo-400" />
-                    <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                        Upload Menu Data
-                    </h2>
+                <div className="flex items-center space-x-4 mb-4">
+                    <div className="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+                        <Activity className="h-6 w-6 text-indigo-400" />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-black text-white tracking-tight">
+                            Upload Sales Data
+                        </h2>
+                        <p className="text-gray-400 text-sm mt-1">
+                            Supported: .csv, .xlsx, .xls
+                        </p>
+                    </div>
                 </div>
 
-                <p className="text-gray-400 mb-8 ml-9 text-sm">
-                    Upload your sales data to generate AI-powered insights.
-                </p>
-
-                <div className="space-y-6 relative z-10">
+                <div className="space-y-8 relative z-10 mt-8">
                     {/* File Input */}
                     <div className="relative">
                         <input
@@ -222,125 +225,129 @@ Vegan Wrap,3.50,10.00,25`;
                         />
                         <label
                             htmlFor="file-upload"
-                            className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl transition-all duration-300 cursor-pointer ${file
-                                ? 'border-indigo-500/50 bg-indigo-500/10'
-                                : 'border-white/10 hover:border-indigo-400/50 hover:bg-white/5'
+                            className={`flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-3xl transition-all duration-500 cursor-pointer ${file
+                                ? 'border-indigo-500/50 bg-indigo-500/5'
+                                : 'border-white/10 bg-white/[0.02] hover:border-indigo-400/50 hover:bg-white/[0.05]'
                                 }`}
                         >
-                            <div className={`p-4 rounded-full mb-4 transition-all duration-300 ${file ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : 'bg-white/5 text-gray-400'
+                            <div className={`p-5 rounded-2xl mb-5 transition-all duration-500 ${file ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-500/40 scale-110' : 'bg-white/5 text-gray-500'
                                 }`}>
-                                <Upload className="h-8 w-8" />
+                                <Upload className="h-10 w-10" />
                             </div>
-                            <p className="text-sm font-medium text-gray-200">
-                                {file ? file.name : "Upload CSV or Excel file"}
+                            <p className="text-lg font-bold text-white">
+                                {file ? file.name : "Drop your file here"}
                             </p>
-                            <p className="text-xs text-gray-500 mt-2">
-                                Drag and drop or click to select
+                            <p className="text-sm text-gray-500 mt-2">
+                                or click to browse local files
                             </p>
                         </label>
                     </div>
 
-                    {/* Demo Data Button */}
-                    <div className="flex items-center justify-center">
-                        <div className="flex items-center space-x-3 text-xs text-gray-500">
-                            <div className="h-px flex-1 bg-white/10"></div>
-                            <span>OR</span>
-                            <div className="h-px flex-1 bg-white/10"></div>
-                        </div>
-                    </div>
+                    {!file && (
+                        <>
+                            <div className="flex items-center space-x-4">
+                                <div className="h-px flex-1 bg-white/5"></div>
+                                <span className="text-xs font-bold text-gray-600 uppercase tracking-widest">OR</span>
+                                <div className="h-px flex-1 bg-white/5"></div>
+                            </div>
 
-                    <button
-                        onClick={handleDemoData}
-                        disabled={loading}
-                        className="w-full py-3 px-4 rounded-xl text-sm font-medium text-gray-300 border border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/30 transition-all duration-300 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Sparkles className="h-4 w-4" />
-                        <span>Use Demo Data</span>
-                    </button>
+                            <button
+                                onClick={handleDemoData}
+                                disabled={loading}
+                                className="w-full py-5 px-6 rounded-2xl text-sm font-bold text-gray-300 border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/20 transition-all duration-300 flex items-center justify-center space-x-3 disabled:opacity-50"
+                            >
+                                <Sparkles className="h-5 w-5 text-indigo-400" />
+                                <span>Try with Demo Dataset</span>
+                            </button>
+                        </>
+                    )}
 
-                    {/* Column Mapping Dropdowns - shown only after file selection */}
+                    {/* Column Mapping - shown only after file selection */}
                     {file && availableColumns.length > 0 && (
-                        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-400 mb-1">Item Name Column</label>
+                        <div className="space-y-6 animate-reveal">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Menu Item Column</label>
                                     <select
                                         value={colItem}
                                         onChange={(e) => setColItem(e.target.value)}
-                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
+                                        className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none cursor-pointer hover:bg-white/[0.05]"
                                     >
-                                        <option value="" className="bg-gray-800 text-gray-200">Select column...</option>
+                                        <option value="" className="bg-gray-900">Select column...</option>
                                         {availableColumns.map((col, idx) => (
-                                            <option key={idx} value={col} className="bg-gray-800 text-gray-200">{col}</option>
+                                            <option key={idx} value={col} className="bg-gray-900">{col}</option>
                                         ))}
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-400 mb-1">Cost Column</label>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Cost Column</label>
                                     <select
                                         value={colCost}
                                         onChange={(e) => setColCost(e.target.value)}
-                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
+                                        className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none cursor-pointer hover:bg-white/[0.05]"
                                     >
-                                        <option value="" className="bg-gray-800 text-gray-200">Select column...</option>
+                                        <option value="" className="bg-gray-900">Select column...</option>
                                         {availableColumns.map((col, idx) => (
-                                            <option key={idx} value={col} className="bg-gray-800 text-gray-200">{col}</option>
+                                            <option key={idx} value={col} className="bg-gray-900">{col}</option>
                                         ))}
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-400 mb-1">Price Column</label>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Price Column</label>
                                     <select
                                         value={colPrice}
                                         onChange={(e) => setColPrice(e.target.value)}
-                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
+                                        className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none cursor-pointer hover:bg-white/[0.05]"
                                     >
-                                        <option value="" className="bg-gray-800 text-gray-200">Select column...</option>
+                                        <option value="" className="bg-gray-900">Select column...</option>
                                         {availableColumns.map((col, idx) => (
-                                            <option key={idx} value={col} className="bg-gray-800 text-gray-200">{col}</option>
+                                            <option key={idx} value={col} className="bg-gray-900">{col}</option>
                                         ))}
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-400 mb-1">Quantity Column</label>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Quantity Column</label>
                                     <select
                                         value={colQty}
                                         onChange={(e) => setColQty(e.target.value)}
-                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
+                                        className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none cursor-pointer hover:bg-white/[0.05]"
                                     >
-                                        <option value="" className="bg-gray-800 text-gray-200">Select column...</option>
+                                        <option value="" className="bg-gray-900">Select column...</option>
                                         {availableColumns.map((col, idx) => (
-                                            <option key={idx} value={col} className="bg-gray-800 text-gray-200">{col}</option>
+                                            <option key={idx} value={col} className="bg-gray-900">{col}</option>
                                         ))}
                                     </select>
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-xs font-medium text-gray-400 mb-1">Data Duration (Days)</label>
+                            <div className="space-y-2 pt-2">
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Data Duration (Days)</label>
                                 <input
                                     type="number"
                                     value={duration}
                                     onChange={(e) => setDuration(e.target.value)}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
+                                    className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all hover:bg-white/[0.05]"
                                 />
                             </div>
 
                             <button
                                 onClick={handleAnalyze}
                                 disabled={loading}
-                                className={`w-full py-3 px-4 rounded-xl text-sm font-bold text-white shadow-lg transition-all duration-300 ${loading
+                                className={`w-full py-5 px-6 rounded-2xl text-base font-black text-white shadow-2xl transition-all duration-500 overflow-hidden relative group ${loading
                                     ? 'bg-indigo-900/50 cursor-wait'
-                                    : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 hover:shadow-indigo-500/25 hover:-translate-y-0.5'
+                                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:scale-[1.02] active:scale-[0.98]'
                                     }`}
                             >
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shine" />
                                 {loading ? (
-                                    <div className="flex items-center justify-center space-x-2">
-                                        <Activity className="h-4 w-4 animate-pulse text-indigo-300" />
-                                        <span>AI is analyzing your menu...</span>
+                                    <div className="flex items-center justify-center space-x-3">
+                                        <Activity className="h-5 w-5 animate-pulse text-indigo-200" />
+                                        <span>AI is processing matrix...</span>
                                     </div>
                                 ) : (
-                                    'Run Analysis'
+                                    <span className="flex items-center justify-center gap-3">
+                                        Deep Analysis <Sparkles className="h-5 w-5" />
+                                    </span>
                                 )}
                             </button>
                         </div>

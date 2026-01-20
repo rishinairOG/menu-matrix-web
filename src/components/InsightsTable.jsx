@@ -37,59 +37,61 @@ const InsightsTable = ({ data }) => {
     };
 
     return (
-        <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden shadow-xl">
-            <div className="px-8 py-5 border-b border-white/10 flex items-center justify-between bg-white/5">
-                <h3 className="text-lg font-bold text-white">Actionable Insights</h3>
-                <div className="text-xs text-gray-400 font-mono bg-black/20 px-2 py-1 rounded">
-                    {data.length} ITEMS ANALYZED
+        <div className="glass-card rounded-[2.5rem] border border-white/5 overflow-hidden animate-reveal" style={{ animationDelay: '0.2s' }}>
+            <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+                <div>
+                    <h2 className="text-2xl font-black text-white tracking-tight">Strategy Table</h2>
+                    <p className="text-sm text-gray-500 mt-1 font-medium">Detailed item-by-item analysis and optimization guide</p>
+                </div>
+                <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-xs font-bold text-gray-400 uppercase tracking-widest">
+                    {data.length} Items Analyzed
                 </div>
             </div>
+
             <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-white/10">
+                <table className="w-full text-left border-collapse">
                     <thead>
-                        <tr className="bg-white/5">
-                            <th scope="col" className="px-8 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-widest">
-                                Item Name
-                            </th>
-                            <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-widest">
-                                Category
-                            </th>
-                            <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-400 uppercase tracking-widest">
-                                Margin
-                            </th>
-                            <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-400 uppercase tracking-widest">
-                                Popularity
-                            </th>
-                            <th scope="col" className="px-8 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-widest">
-                                AI Recommendation
-                            </th>
+                        <tr className="bg-white/[0.02]">
+                            <th className="px-8 py-5 text-xs font-black text-gray-500 uppercase tracking-widest border-b border-white/5">Item Name</th>
+                            <th className="px-8 py-5 text-xs font-black text-gray-500 uppercase tracking-widest border-b border-white/5">Category</th>
+                            <th className="px-8 py-5 text-xs font-black text-gray-500 uppercase tracking-widest border-b border-white/5">Margin</th>
+                            <th className="px-8 py-5 text-xs font-black text-gray-500 uppercase tracking-widest border-b border-white/5">Sold</th>
+                            <th className="px-8 py-5 text-xs font-black text-gray-500 uppercase tracking-widest border-b border-white/5">Strategy / Recommendation</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5 bg-transparent">
-                        {data.map((item, index) => (
-                            <tr key={index} className="hover:bg-white/5 transition-colors group">
-                                <td className="px-8 py-4 whitespace-nowrap text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
-                                    {item.menu_item}
+                    <tbody className="divide-y divide-white/[0.03]">
+                        {data.map((item, idx) => (
+                            <tr key={idx} className="group hover:bg-white/[0.03] transition-colors duration-300">
+                                <td className="px-8 py-6">
+                                    <div className="font-black text-white text-base tracking-tight">{item.menu_item}</div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                    <span className={clsx(
-                                        'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border shadow-sm',
-                                        getCategoryStyles(item.category)
-                                    )}>
-                                        <span className="mr-1.5">{getCategoryIcon(item.category)}</span>
+                                <td className="px-8 py-6">
+                                    <span className={`inline-flex items-center px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border ${item.category === 'Star' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                            item.category === 'Plowhorse' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                item.category === 'Puzzle' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                                    'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                                        }`}>
                                         {item.category}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-400 font-mono">
-                                    ${item.contribution_margin?.toFixed(2)}
+                                <td className="px-8 py-6">
+                                    <div className="text-gray-300 font-bold tabular-nums">
+                                        ${item.contribution_margin.toFixed(2)}
+                                    </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-400 font-mono">
-                                    {item.popularity_index?.toFixed(1)}%
+                                <td className="px-8 py-6 font-bold tabular-nums text-gray-400">
+                                    {item.sales_volume}
                                 </td>
-                                <td className="px-8 py-4 text-sm max-w-sm break-words whitespace-normal leading-relaxed">
-                                    <div className={`flex items-start gap-2 ${getInsightStyle(item.insight)}`}>
-                                        <div className="mt-1 opacity-50"><ArrowRight className="h-3 w-3" /></div>
-                                        <span>{item.insight || "No recommendation available."}</span>
+                                <td className="px-8 py-6">
+                                    <div className="flex items-start gap-3">
+                                        <div className={`mt-1 h-1.5 w-1.5 rounded-full shrink-0 ${item.category === 'Star' ? 'bg-emerald-500' :
+                                                item.category === 'Plowhorse' ? 'bg-amber-500' :
+                                                    item.category === 'Puzzle' ? 'bg-blue-500' :
+                                                        'bg-rose-500'
+                                            }`} />
+                                        <p className="text-sm text-gray-400 font-medium leading-relaxed group-hover:text-gray-200 transition-colors">
+                                            {item.insight}
+                                        </p>
                                     </div>
                                 </td>
                             </tr>
