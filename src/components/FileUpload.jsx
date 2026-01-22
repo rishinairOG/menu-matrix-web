@@ -19,31 +19,61 @@ const FileUpload = ({ onDataReceived }) => {
             const selectedFile = e.target.files[0];
             setFile(selectedFile);
 
+            // Reset state for new file
+            setAvailableColumns([]);
+            setColItem('');
+            setColCost('');
+            setColPrice('');
+            setColQty('');
+
             const fileExtension = selectedFile.name.split('.').pop().toLowerCase();
 
             // Handle Excel files (.xlsx, .xls)
             if (fileExtension === 'xlsx' || fileExtension === 'xls') {
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    const data = new Uint8Array(event.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+                    try {
+                        const data = new Uint8Array(event.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
 
-                    // Get first sheet
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
+                        // Get first sheet
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
 
-                    // Convert to JSON to get headers
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        // Convert to JSON to get headers
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                    if (jsonData && jsonData.length > 0) {
-                        const headers = jsonData[0].filter(h => h && h.toString().trim() !== '');
-                        setAvailableColumns(headers);
+                        if (jsonData && jsonData.length > 0) {
+                            // Find the first row that likely contains headers (more than 1 non-empty cell)
+                            let headers = [];
+                            for (let i = 0; i < Math.min(jsonData.length, 20); i++) {
+                                const row = jsonData[i];
+                                if (row && Array.isArray(row)) {
+                                    const potentialHeaders = row.filter(h => h !== null && h !== undefined && h.toString().trim() !== '');
+                                    if (potentialHeaders.length >= 2) { // Heuristic: at least 2 non-empty cells to be a header row
+                                        headers = potentialHeaders.map(h => h.toString().trim());
+                                        break;
+                                    }
+                                }
+                            }
 
-                        // Auto-select if exact matches found
-                        if (headers.includes('Menu Item')) setColItem('Menu Item');
-                        if (headers.includes('Cost')) setColCost('Cost');
-                        if (headers.includes('Price')) setColPrice('Price');
-                        if (headers.includes('Sold Qty')) setColQty('Sold Qty');
+                            if (headers.length > 0) {
+                                setAvailableColumns(headers);
+                                // Auto-select if matches found (case insensitive)
+                                headers.forEach(h => {
+                                    const lower = h.toLowerCase();
+                                    if (lower.includes('item') || lower.includes('name') || lower.includes('dish')) setColItem(h);
+                                    if (lower.includes('cost')) setColCost(h);
+                                    if (lower.includes('price')) setColPrice(h);
+                                    if (lower.includes('qty') || lower.includes('quantity') || lower.includes('sold')) setColQty(h);
+                                });
+                            } else {
+                                alert("We couldn't find any clear headers in the first 20 rows of your Excel sheet. Please make sure the first row contains your column names.");
+                            }
+                        }
+                    } catch (err) {
+                        console.error("Excel Read Error:", err);
+                        alert("Error reading Excel file. Please make sure it's a valid .xlsx or .xls file.");
                     }
                 };
                 reader.readAsArrayBuffer(selectedFile);
@@ -59,14 +89,17 @@ const FileUpload = ({ onDataReceived }) => {
                         skipEmptyLines: true,
                         complete: (results) => {
                             if (results.data && results.data.length > 0) {
-                                const headers = results.data[0].filter(h => h && h.trim() !== '');
+                                const headers = results.data[0].filter(h => h && h.trim() !== '').map(h => h.trim());
                                 setAvailableColumns(headers);
 
-                                // Auto-select if exact matches found
-                                if (headers.includes('Menu Item')) setColItem('Menu Item');
-                                if (headers.includes('Cost')) setColCost('Cost');
-                                if (headers.includes('Price')) setColPrice('Price');
-                                if (headers.includes('Sold Qty')) setColQty('Sold Qty');
+                                // Auto-select if matches found
+                                headers.forEach(h => {
+                                    const lower = h.toLowerCase();
+                                    if (lower.includes('item') || lower.includes('name') || lower.includes('dish')) setColItem(h);
+                                    if (lower.includes('cost')) setColCost(h);
+                                    if (lower.includes('price')) setColPrice(h);
+                                    if (lower.includes('qty') || lower.includes('quantity') || lower.includes('sold')) setColQty(h);
+                                });
                             }
                         }
                     });
@@ -156,7 +189,15 @@ Vegan Wrap,3.50,10.00,25`;
         }
     };
 
-    const handleAnalyzeWithFile = async (fileToAnalyze = file) => {
+    const handleAnalyze = () => {
+        if (!colItem || !colCost || !colPrice || !colQty) {
+            alert("Please map all columns before starting the analysis.");
+            return;
+        }
+        handleAnalyzeWithFile(file);
+    };
+
+    const handleAnalyzeWithFile = async (fileToAnalyze) => {
         if (!fileToAnalyze) {
             alert("Please select a file first.");
             return;
@@ -190,8 +231,6 @@ Vegan Wrap,3.50,10.00,25`;
         }
     };
 
-    const handleAnalyze = () => handleAnalyzeWithFile();
-
     return (
         <div className="max-w-2xl mx-auto">
             <div className="glass-card rounded-[2.5rem] p-10 relative overflow-hidden group">
@@ -223,24 +262,39 @@ Vegan Wrap,3.50,10.00,25`;
                             className="sr-only"
                             onChange={handleFileChange}
                         />
-                        <label
-                            htmlFor="file-upload"
-                            className={`flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-3xl transition-all duration-500 cursor-pointer ${file
-                                ? 'border-indigo-500/50 bg-indigo-500/5'
-                                : 'border-white/10 bg-white/[0.02] hover:border-indigo-400/50 hover:bg-white/[0.05]'
-                                }`}
-                        >
-                            <div className={`p-5 rounded-2xl mb-5 transition-all duration-500 ${file ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-500/40 scale-110' : 'bg-white/5 text-gray-500'
-                                }`}>
-                                <Upload className="h-10 w-10" />
-                            </div>
-                            <p className="text-lg font-bold text-white">
-                                {file ? file.name : "Drop your file here"}
-                            </p>
-                            <p className="text-sm text-gray-500 mt-2">
-                                or click to browse local files
-                            </p>
-                        </label>
+                        <div className="relative group/input">
+                            <label
+                                htmlFor="file-upload"
+                                className={`flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-3xl transition-all duration-500 cursor-pointer ${file
+                                    ? 'border-indigo-500/50 bg-indigo-500/5'
+                                    : 'border-white/10 bg-white/[0.02] hover:border-indigo-400/50 hover:bg-white/[0.05]'
+                                    }`}
+                            >
+                                <div className={`p-5 rounded-2xl mb-5 transition-all duration-500 ${file ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-500/40 scale-110' : 'bg-white/5 text-gray-500'
+                                    }`}>
+                                    <Upload className="h-10 w-10" />
+                                </div>
+                                <p className="text-lg font-bold text-white max-w-[80%] truncate text-center">
+                                    {file ? file.name : "Drop your file here"}
+                                </p>
+                                <p className="text-sm text-gray-500 mt-2">
+                                    {file ? "Click to change file" : "or click to browse local files"}
+                                </p>
+                            </label>
+                            {file && (
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setFile(null);
+                                        setAvailableColumns([]);
+                                    }}
+                                    className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20 z-20"
+                                    title="Choose different file"
+                                >
+                                    <span className="text-lg leading-none">×</span>
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {!file && (
@@ -271,7 +325,7 @@ Vegan Wrap,3.50,10.00,25`;
                                     <select
                                         value={colItem}
                                         onChange={(e) => setColItem(e.target.value)}
-                                        className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none cursor-pointer hover:bg-white/[0.05]"
+                                        className={`w-full bg-white/[0.03] border rounded-xl px-4 py-3.5 text-sm transition-all appearance-none cursor-pointer hover:bg-white/[0.05] ${colItem ? 'border-emerald-500/50 text-emerald-400' : 'border-white/10 text-white'}`}
                                     >
                                         <option value="" className="bg-gray-900">Select column...</option>
                                         {availableColumns.map((col, idx) => (
@@ -284,7 +338,7 @@ Vegan Wrap,3.50,10.00,25`;
                                     <select
                                         value={colCost}
                                         onChange={(e) => setColCost(e.target.value)}
-                                        className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none cursor-pointer hover:bg-white/[0.05]"
+                                        className={`w-full bg-white/[0.03] border rounded-xl px-4 py-3.5 text-sm transition-all appearance-none cursor-pointer hover:bg-white/[0.05] ${colCost ? 'border-emerald-500/50 text-emerald-400' : 'border-white/10 text-white'}`}
                                     >
                                         <option value="" className="bg-gray-900">Select column...</option>
                                         {availableColumns.map((col, idx) => (
@@ -297,7 +351,7 @@ Vegan Wrap,3.50,10.00,25`;
                                     <select
                                         value={colPrice}
                                         onChange={(e) => setColPrice(e.target.value)}
-                                        className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none cursor-pointer hover:bg-white/[0.05]"
+                                        className={`w-full bg-white/[0.03] border rounded-xl px-4 py-3.5 text-sm transition-all appearance-none cursor-pointer hover:bg-white/[0.05] ${colPrice ? 'border-emerald-500/50 text-emerald-400' : 'border-white/10 text-white'}`}
                                     >
                                         <option value="" className="bg-gray-900">Select column...</option>
                                         {availableColumns.map((col, idx) => (
@@ -310,7 +364,7 @@ Vegan Wrap,3.50,10.00,25`;
                                     <select
                                         value={colQty}
                                         onChange={(e) => setColQty(e.target.value)}
-                                        className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none cursor-pointer hover:bg-white/[0.05]"
+                                        className={`w-full bg-white/[0.03] border rounded-xl px-4 py-3.5 text-sm transition-all appearance-none cursor-pointer hover:bg-white/[0.05] ${colQty ? 'border-emerald-500/50 text-emerald-400' : 'border-white/10 text-white'}`}
                                     >
                                         <option value="" className="bg-gray-900">Select column...</option>
                                         {availableColumns.map((col, idx) => (
@@ -332,9 +386,9 @@ Vegan Wrap,3.50,10.00,25`;
 
                             <button
                                 onClick={handleAnalyze}
-                                disabled={loading}
-                                className={`w-full py-5 px-6 rounded-2xl text-base font-black text-white shadow-2xl transition-all duration-500 overflow-hidden relative group ${loading
-                                    ? 'bg-indigo-900/50 cursor-wait'
+                                disabled={loading || !colItem || !colCost || !colPrice || !colQty}
+                                className={`w-full py-5 px-6 rounded-2xl text-base font-black text-white shadow-2xl transition-all duration-500 overflow-hidden relative group ${(loading || !colItem || !colCost || !colPrice || !colQty)
+                                    ? 'bg-gray-800/50 cursor-not-allowed grayscale'
                                     : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:scale-[1.02] active:scale-[0.98]'
                                     }`}
                             >
